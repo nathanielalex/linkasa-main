@@ -1,0 +1,66 @@
+services:
+  frontend:
+    build:
+      context: ./linkasa-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://backend:8080/api
+        VITE_IMG_URL: http://backend:8080
+    image: nathanalexx/linkasa-frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - backend_network
+    env_file:
+      - .env
+  
+  backend:
+    build:
+      context: ./linkasa-backend
+      dockerfile: Dockerfile
+    image: nathanalexx/linkasa-backend:latest
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - NODE_ENV=${NODE_ENV}
+      - CLIENT_ORIGIN=${CLIENT_ORIGIN}
+      - PORT=${PORT}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend_network
+    env_file:
+      - .env
+    restart: on-failure
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    networks:
+      - backend_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+networks:
+  backend_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

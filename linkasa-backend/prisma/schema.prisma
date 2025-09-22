@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+//npx prisma migrate dev --name create_initial_schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  username          String               @unique @db.VarChar(50)
+  email             String               @unique @db.VarChar(100)
+  passwordHash      String               @db.VarChar(255)
+  createdAt         DateTime             @default(now())
+
+  lessonProgress    UserLessonProgress[]
+  finalQuizAttempts FinalQuizAttempt[]
+  forumThreads      ForumThread[]
+  forumReplies      ForumReply[]
+}
+
+model Lesson {
+  id                Int                  @id @default(autoincrement())
+  title             String               @db.VarChar(100)
+  lessonOrder       Int                  @unique
+
+  lessonAlphabets   LessonAlphabet[]
+  exercises         Exercise[]
+  userProgress      UserLessonProgress[]
+}
+
+model Alphabet {
+  id                Int                  @id @default(autoincrement())
+  letter            String               @unique @db.Char(1)
+  imageUrl          String               @db.VarChar(255)
+
+  lessonAlphabets   LessonAlphabet[]
+  exercises         Exercise[]           @relation("CorrectAlphabet")
+  exerciseOptions   ExerciseOption[]
+  finalQuizAnswers  FinalQuizAnswer[]
+  flashcards        Flashcard[]
+}
+
+model LessonAlphabet {
+  id                Int      @id @default(autoincrement())
+  lessonId          Int
+  alphabetId        Int
+
+  lesson            Lesson   @relation(fields: [lessonId], references: [id])
+  alphabet          Alphabet @relation(fields: [alphabetId], references: [id])
+}
+
+model Exercise {
+  id                   Int               @id @default(autoincrement())
+  lessonId             Int
+  imageUrl             String            @db.VarChar(255)
+  correctAlphabetId    Int
+
+  lesson               Lesson            @relation(fields: [lessonId], references: [id])
+  correctAlphabet      Alphabet          @relation("CorrectAlphabet", fields: [correctAlphabetId], references: [id])
+  options              ExerciseOption[]
+}
+
+model ExerciseOption {
+  id            Int      @id @default(autoincrement())
+  exerciseId    Int
+  alphabetId    Int
+  isCorrect     Boolean
+
+  exercise      Exercise @relation(fields: [exerciseId], references: [id])
+  alphabet      Alphabet @relation(fields: [alphabetId], references: [id])
+}
+
+model UserLessonProgress {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  lessonId    Int
+  completedAt DateTime?
+  score       Float?
+
+  user        User      @relation(fields: [userId], references: [id])
+  lesson      Lesson    @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+}
+
+model FinalQuizAttempt {
+  id             Int                @id @default(autoincrement())
+  userId         Int
+  score          Float
+  completionTime Int                // in seconds
+  attemptedAt    DateTime           @default(now())
+
+  user           User               @relation(fields: [userId], references: [id])
+  answers        FinalQuizAnswer[]
+}
+
+model FinalQuizAnswer {
+  id             Int       @id @default(autoincrement())
+  attemptId      Int
+  questionNumber Int
+  alphabetId     Int
+  userAnswer     String    @db.Char(1)
+  isCorrect      Boolean
+
+  attempt        FinalQuizAttempt @relation(fields: [attemptId], references: [id])
+  alphabet       Alphabet         @relation(fields: [alphabetId], references: [id])
+}
+
+model Flashcard {
+  id          Int      @id @default(autoincrement())
+  alphabetId  Int
+  imageUrl    String   @db.VarChar(255)
+
+  alphabet    Alphabet @relation(fields: [alphabetId], references: [id])
+}
+
+model ForumThread {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  content     String        @db.VarChar(200)
+  createdAt   DateTime      @default(now())
+
+  user        User          @relation(fields: [userId], references: [id])
+  replies     ForumReply[]
+  images      ThreadImage[]
+}
+
+model ThreadImage {
+  id          Int           @id @default(autoincrement())
+  threadId    Int
+  image       String        @db.VarChar(255)
+  createdAt   DateTime      @default(now())
+
+  thread      ForumThread   @relation(fields: [threadId], references: [id])
+}
+
+model ForumReply {
+  id          Int       @id @default(autoincrement())
+  threadId    Int
+  userId      Int
+  content     String     @db.Text
+  createdAt   DateTime   @default(now())
+
+  thread      ForumThread @relation(fields: [threadId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+}
