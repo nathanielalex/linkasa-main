@@ -167,3 +167,30 @@ VITE_IMG_URL=http://localhost:5000
 | `npm run preview` | Preview production build locally          |
 
 ---
+
+## 📸 Screenshots
+
+*Milestones Page*
+<p align="center">
+  <img src="./screenshots/linkasa-dashboard.png" width="700">
+</p>
+
+*Exercise Page*
+<p align="center">
+  <img src="./screenshots/linkasa-exercise2.png"  width="700">
+</p>
+
+*Flashcards Page*
+<p align="center">
+  <img src="./screenshots/linkasa-flashcards.png"  width="700">
+</p>
+
+*Forum Page*
+<p align="center">
+  <img src="./screenshots/linkasa-forum.png"  width="700">
+</p>
+
+*Progress Page*
+<p align="center">
+  <img src="./screenshots/linkasa-quiz.png"  width="700">
+</p>
